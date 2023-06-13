@@ -1,7 +1,6 @@
 library(dplyr)
 
-full_tweets = read.csv("resources/tweets.csv")  # path to dataset
-head(full_tweets)
+full_tweets = read.csv("resources/tweets.csv")  # path to data set, not included in repo
 
 # no garbage values found
 # duplicate ID removal
@@ -19,7 +18,7 @@ riot_tweets_biden <- riot_tweets[grep('biden', riot_tweets$text, ignore.case = T
 # data set that includes both "trump" and "biden"
 riot_tweets_both <- intersect(riot_tweets_biden, riot_tweets_trump)
 
-# Write to dataset
+# Write to file
 write.csv(riot_tweets_trump, file = "resources/riot_tweets_trump.csv", row.names = FALSE)
 write.csv(riot_tweets_biden, file = "resources/riot_tweets_biden.csv", row.names = FALSE)
 write.csv(riot_tweets_both, file = "resources/riot_tweets_both.csv", row.names = FALSE)
