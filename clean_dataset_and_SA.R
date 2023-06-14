@@ -4,8 +4,8 @@ library(lubridate)
 library(syuzhet)
 library(ggplot2)
 
-riot_tweets_biden = read.csv("resources/riot_tweets_snscrape_biden.csv")
-riot_tweets_trump = read.csv("resources/riot_tweets_snscrape_trump.csv")  
+riot_tweets_biden = read.csv("resources/riot_tweets_snscrape_biden_raw.csv")
+riot_tweets_trump = read.csv("resources/riot_tweets_snscrape_trump_raw.csv")  
 
 ##### Cleaning Dataset
 ########################
@@ -22,9 +22,6 @@ riot_tweets_trump = riot_tweets_trump %>% distinct(content, .keep_all = TRUE)
 riot_tweets_biden = select(riot_tweets_biden, -c(location, coordinates))
 riot_tweets_trump = select(riot_tweets_trump, -c(location, coordinates))
 
-# Write to file
-write.csv(riot_tweets_trump, file = "resources/riot_tweets_trump.csv", row.names = FALSE)
-write.csv(riot_tweets_biden, file = "resources/riot_tweets_biden.csv", row.names = FALSE)
 
 ##### Analysis for Biden
 ########################
@@ -50,11 +47,8 @@ ggplot(biden_sentiment, aes(x = minute, y = avg_sentiment)) +
 ##### Analysis for Trump
 ########################
 
-# convert timestamp to datetime (there was an issue with one date, so I had to use try-catch)
-tryCatch(
-  parse_date_time(riot_tweets_trump$date, orders = c("ymd_hms", "dmy_hms", "mdy_hms")),
-  error = function(e) e
-)
+# convert timestamp to datetime 
+riot_tweets_trump$timestamp <- ymd_hms(riot_tweets_trump$date)
 
 # perform SA
 riot_tweets_trump$sentiment <- get_sentiment(riot_tweets_trump$content, method = "bing")
@@ -73,11 +67,16 @@ ggplot(trump_sentiment, aes(x = minute, y = avg_sentiment)) +
 ##### Comparison
 ########################
 
+# Write to file (so you dont have to do analysis again)
+write.csv(riot_tweets_trump, file = "resources/riot_tweets_trump.csv", row.names = FALSE)
+write.csv(riot_tweets_biden, file = "resources/riot_tweets_biden.csv", row.names = FALSE)
+
+
 trump_sentiment['dataset'] <- "Trump" 
 biden_sentiment['dataset'] <- "Biden"
 merged_data <- rbind(trump_sentiment, biden_sentiment)
 
 ggplot(merged_data, aes(x = minute, y = avg_sentiment, color = dataset)) +
-  geom_line() +
+  geom_smooth() +
   labs(x = "Time", y = "Average Sentiment", title = "Sentiment Analysis Timeline") +
   scale_color_manual(values = c("Trump" = "red", "Biden" = "blue"))
