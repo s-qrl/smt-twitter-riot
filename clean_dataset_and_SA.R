@@ -26,11 +26,27 @@ riot_tweets_trump = select(riot_tweets_trump, -c(location, coordinates))
 ##### Analysis for Biden
 ########################
 
-# convert timestamp to datetime
-riot_tweets_biden$timestamp <- ymd_hms(riot_tweets_biden$date)
-
 # perform SA
 riot_tweets_biden$sentiment <- get_sentiment(riot_tweets_biden$content, method = "bing")
+riot_tweets_biden$sentiment_syuzhet <- syuzhet::get_sentiment(riot_tweets_biden$content, method = "syuzhet")
+
+write.csv(riot_tweets_biden, file = "resources/riot_tweets_biden.csv", row.names = FALSE)
+
+##### Analysis for Trump
+########################
+
+# perform SA
+riot_tweets_trump$sentiment <- get_sentiment(riot_tweets_trump$content, method = "bing")
+riot_tweets_trump$sentiment_syuzhet <- syuzhet::get_sentiment(riot_tweets_trump$content, method = "syuzhet")
+
+write.csv(riot_tweets_trump, file = "resources/riot_tweets_trump.csv", row.names = FALSE)
+
+
+##### Aggregation
+
+# convert timestamp to datetime 
+riot_tweets_trump$timestamp <- ymd_hms(riot_tweets_trump$date)
+riot_tweets_biden$timestamp <- ymd_hms(riot_tweets_biden$date)
 
 # aggregate sentiment scores per minute
 biden_sentiment <- riot_tweets_biden %>%
@@ -38,45 +54,55 @@ biden_sentiment <- riot_tweets_biden %>%
   group_by(minute) %>%
   summarize(avg_sentiment = mean(sentiment))
 
-# visualize
-ggplot(biden_sentiment, aes(x = minute, y = avg_sentiment)) +
-  geom_line() +
-  labs(x = "Time", y = "Average Sentiment", title = "Sentiment Analysis Timeline")
+biden_sentiment_syuzhet <- riot_tweets_biden %>%
+  mutate(minute = floor_date(timestamp, "minute")) %>%
+  group_by(minute) %>%
+  summarize(avg_sentiment = mean(sentiment_syuzhet))
 
-
-##### Analysis for Trump
-########################
-
-# convert timestamp to datetime 
-riot_tweets_trump$timestamp <- ymd_hms(riot_tweets_trump$date)
-
-# perform SA
-riot_tweets_trump$sentiment <- get_sentiment(riot_tweets_trump$content, method = "bing")
-
-# aggregate sentiment scores per minute
 trump_sentiment <- riot_tweets_trump %>%
   mutate(minute = floor_date(timestamp, "minute")) %>%
   group_by(minute) %>%
   summarize(avg_sentiment = mean(sentiment))
 
-# visualize
+trump_sentiment_syuzhet <- riot_tweets_trump %>%
+  mutate(minute = floor_date(timestamp, "minute")) %>%
+  group_by(minute) %>%
+  summarize(avg_sentiment = mean(sentiment_syuzhet))
+
+
+##### Analysis
+########################
+
+# visualize biden
+ggplot(biden_sentiment, aes(x = minute, y = avg_sentiment)) +
+  geom_line() +
+  labs(x = "Time", y = "Average Sentiment", title = "Sentiment Analysis Timeline")
+
+# visualize trump
 ggplot(trump_sentiment, aes(x = minute, y = avg_sentiment)) +
   geom_line() +
   labs(x = "Time", y = "Average Sentiment", title = "Sentiment Analysis Timeline")
 
-##### Comparison
-########################
 
-# Write to file (so you dont have to do analysis again)
-write.csv(riot_tweets_trump, file = "resources/riot_tweets_trump.csv", row.names = FALSE)
-write.csv(riot_tweets_biden, file = "resources/riot_tweets_biden.csv", row.names = FALSE)
-
+# comparison
 
 trump_sentiment['dataset'] <- "Trump" 
 biden_sentiment['dataset'] <- "Biden"
 merged_data <- rbind(trump_sentiment, biden_sentiment)
 
+trump_sentiment_syuzhet['dataset'] <- "Trump" 
+biden_sentiment_syuzhet['dataset'] <- "Biden"
+merged_data <- rbind(trump_sentiment_syuzhet, biden_sentiment_syuzhet)
+
+### method = "bing"
 ggplot(merged_data, aes(x = minute, y = avg_sentiment, color = dataset)) +
   geom_smooth() +
   labs(x = "Time", y = "Average Sentiment", title = "Sentiment Analysis Timeline") +
   scale_color_manual(values = c("Trump" = "red", "Biden" = "blue"))
+
+### method = "syuzhet"
+ggplot(merged_data, aes(x = minute, y = avg_sentiment, color = dataset)) +
+  geom_smooth() +
+  labs(x = "Time", y = "Average Sentiment", title = "Sentiment Analysis Timeline") +
+  scale_color_manual(values = c("Trump" = "red", "Biden" = "blue"))
+
