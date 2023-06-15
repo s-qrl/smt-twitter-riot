@@ -73,15 +73,67 @@ trump_sentiment_syuzhet <- riot_tweets_trump %>%
 ##### Analysis
 ########################
 
+
+# adding rolling means (k=10 has been chosen arbitrarily)
+biden_sentiment$rollmean = zoo::rollmean(biden_sentiment$avg_sentiment,10, fill = NA)
+biden_sentiment_syuzhet$rollmean = zoo::rollmean(biden_sentiment_syuzhet$avg_sentiment,10, fill = NA)
+
+trump_sentiment$rollmean = zoo::rollmean(trump_sentiment$avg_sentiment,10, fill = NA)
+trump_sentiment_syuzhet$rollmean = zoo::rollmean(trump_sentiment_syuzhet$avg_sentiment,10, fill = NA)
+
+##### Biden
+########################
+
 # visualize biden
 ggplot(biden_sentiment, aes(x = minute, y = avg_sentiment)) +
-  geom_line() +
-  labs(x = "Time", y = "Average Sentiment", title = "Sentiment Analysis Timeline")
+  geom_line(color = "blue") +
+  labs(x = "Time", y = "Average Sentiment", title = "Sentiments of Tweets containing 'Biden'")
+ggsave('plots/biden_average.png', last_plot(), device = "png")
+
+# visualize biden (syuzhet)
+ggplot(biden_sentiment_syuzhet, aes(x = minute, y = avg_sentiment)) +
+  geom_line(color = "blue") +
+  labs(x = "Time", y = "Average Sentiment", title = "Sentiments of Tweets containing 'Biden'")
+ggsave('plots/biden_average_syuzhet.png', last_plot(), device = "png")
+
+# visualize biden (rolling mean)
+ggplot(biden_sentiment, aes(x = minute, y = rollmean)) +
+  geom_line(color = "blue") +
+  labs(x = "Time", y = "Average Sentiment", title = "Sentiments of Tweets containing 'Biden'")
+ggsave('plots/biden_rolling_mean.png', last_plot(), device = "png")
+
+# visualize biden (syuzhet rolling mean)
+ggplot(biden_sentiment_syuzhet, aes(x = minute, y = rollmean)) +
+  geom_line(color = "blue") +
+  labs(x = "Time", y = "Average Sentiment", title = "Sentiments of Tweets containing 'Biden'")
+ggsave('plots/biden_syuzhet_rolling mean.png', last_plot(), device = "png")
+
+##### Trump
+########################
 
 # visualize trump
 ggplot(trump_sentiment, aes(x = minute, y = avg_sentiment)) +
-  geom_line() +
-  labs(x = "Time", y = "Average Sentiment", title = "Sentiment Analysis Timeline")
+  geom_line(color = "red") +
+  labs(x = "Time", y = "Average Sentiment", title = "Sentiments of Tweets containing 'Trump'")
+ggsave('plots/trump_average.png', last_plot(), device = "png")
+
+# visualize trump (syuzhet)
+ggplot(trump_sentiment_syuzhet, aes(x = minute, y = avg_sentiment)) +
+  geom_line(color = "red") +
+  labs(x = "Time", y = "Average Sentiment", title = "Sentiments of Tweets containing 'Trump'")
+ggsave('plots/trump_average_syuzhet.png', last_plot(), device = "png")
+
+# visualize trump (rolling mean)
+ggplot(trump_sentiment, aes(x = minute, y = rollmean)) +
+  geom_line(color = "red") +
+  labs(x = "Time", y = "Average Sentiment", title = "Sentiments of Tweets containing 'Trump'")
+ggsave('plots/trump_rolling_mean.png', last_plot(), device = "png")
+
+# visualize trump (syuzhet rolling mean)
+ggplot(trump_sentiment_syuzhet, aes(x = minute, y = rollmean)) +
+  geom_line(color = "red") +
+  labs(x = "Time", y = "Average Sentiment", title = "Sentiments of Tweets containing 'Trump'")
+ggsave('plots/trump_syuzhet_rolling mean.png', last_plot(), device = "png")
 
 
 # comparison
@@ -92,17 +144,19 @@ merged_data <- rbind(trump_sentiment, biden_sentiment)
 
 trump_sentiment_syuzhet['dataset'] <- "Trump" 
 biden_sentiment_syuzhet['dataset'] <- "Biden"
-merged_data <- rbind(trump_sentiment_syuzhet, biden_sentiment_syuzhet)
+merged_data_syuzhet <- rbind(trump_sentiment_syuzhet, biden_sentiment_syuzhet)
 
 ### method = "bing"
 ggplot(merged_data, aes(x = minute, y = avg_sentiment, color = dataset)) +
   geom_smooth() +
   labs(x = "Time", y = "Average Sentiment", title = "Sentiment Analysis Timeline") +
   scale_color_manual(values = c("Trump" = "red", "Biden" = "blue"))
+ggsave('plots/both_smooth.png', last_plot(), device = "png")
 
 ### method = "syuzhet"
-ggplot(merged_data, aes(x = minute, y = avg_sentiment, color = dataset)) +
+ggplot(merged_data_syuzhet, aes(x = minute, y = avg_sentiment, color = dataset)) +
   geom_smooth() +
   labs(x = "Time", y = "Average Sentiment", title = "Sentiment Analysis Timeline") +
   scale_color_manual(values = c("Trump" = "red", "Biden" = "blue"))
+ggsave('plots/both_syuzhet_smooth.png', last_plot(), device = "png")
 
